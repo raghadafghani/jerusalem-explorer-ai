@@ -5,6 +5,12 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 
-export default defineConfig({
-  plugins: [tanstackStart(), react(), tailwindcss(), tsConfigPaths(), cloudflare()],
-});
+export default defineConfig(({ command }) => ({
+  plugins: [
+    tanstackStart(),
+    react(),
+    tailwindcss(),
+    tsConfigPaths(),
+    command === "build" ? cloudflare() : null,
+  ],
+}));

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import {
   MapPin, Wallet, Clock4, Calendar as CalendarIcon, BedDouble, Users, Sparkles,
   Wand2, Loader2, Compass, RotateCcw, ArrowDown,
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast, Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -21,13 +23,29 @@ import { WeatherBadge } from "@/components/WeatherBadge";
 import { ItineraryView } from "@/components/ItineraryView";
 import { type Lang, t, LANGS } from "@/lib/i18n";
 import { DESTINATIONS, findDestination } from "@/lib/destinations";
-import { generatePlan, type GeneratedPlan } from "@/server/generate-plan";
+import type { GeneratedPlan } from "@/server/generate-plan";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 const DEFAULT_CENTER: [number, number] = [31.7683, 35.2137]; // Jerusalem
+const CURRENCIES = ["USD", "ILS", "EUR", "JOD"] as const;
+type CurrencyCode = typeof CURRENCIES[number];
+
+const CURRENCY_TO_USD: Record<CurrencyCode, number> = {
+  USD: 1,
+  ILS: 0.27,
+  EUR: 1.08,
+  JOD: 1.41,
+};
+
+function inferBudgetTier(amount: number, currency: CurrencyCode, people: number, days: number) {
+  const perPersonPerDayUsd = (amount * CURRENCY_TO_USD[currency]) / Math.max(1, people) / Math.max(1, days);
+  if (perPersonPerDayUsd < 80) return "low" as const;
+  if (perPersonPerDayUsd > 220) return "luxury" as const;
+  return "medium" as const;
+}
 
 function Index() {
   const [lang, setLang] = useState<Lang>("en");
@@ -39,9 +57,14 @@ function Index() {
   const [markerLabel, setMarkerLabel] = useState<string>("Jerusalem");
   const [hoverStops, setHoverStops] = useState<MapStop[]>([]);
 
-  const [budget, setBudget] = useState<"low" | "medium" | "luxury">("medium");
+  const [budgetAmount, setBudgetAmount] = useState("300");
+  const [budgetCurrency, setBudgetCurrency] = useState<CurrencyCode>("USD");
   const [duration, setDuration] = useState<"half" | "full" | "multi">("full");
   const [date, setDate] = useState<Date>(() => new Date());
+  const [dateRange, setDateRange] = useState<DateRange>(() => {
+    const from = new Date();
+    return { from, to: addDays(from, 2) };
+  });
   const [accommodation, setAccommodation] = useState(false);
   const [people, setPeople] = useState(2);
   const [ages, setAges] = useState("");
@@ -71,6 +94,16 @@ function Index() {
   }, [destination, lang]);
 
   const knownDest = useMemo(() => findDestination(destination), [destination]);
+  const tripStartDate = duration === "multi" ? (dateRange.from ?? date) : date;
+  const tripEndDate = duration === "multi" ? (dateRange.to ?? dateRange.from ?? date) : date;
+  const tripDays = duration === "multi"
+    ? Math.max(1, Math.floor((tripEndDate.getTime() - tripStartDate.getTime()) / 86_400_000) + 1)
+    : 1;
+  const parsedBudgetAmount = Math.max(0, Number(budgetAmount) || 0);
+  const budget = inferBudgetTier(parsedBudgetAmount || 300, budgetCurrency, people, tripDays);
+  const dateLabel = duration === "multi"
+    ? `${format(tripStartDate, "MMM d, yyyy")} - ${format(tripEndDate, "MMM d, yyyy")}`
+    : format(date, "PPP");
 
   async function handleGenerate() {
     const dest = knownDest;
@@ -82,27 +115,40 @@ function Index() {
       toast.error(t(lang, "where_label"));
       return;
     }
+    if (parsedBudgetAmount <= 0) {
+      toast.error("Enter your budget amount");
+      return;
+    }
 
     setLoading(true);
     setPlan(null);
     setHoverStops([]);
     try {
-      const result = await generatePlan({
-        data: {
+      const res = await fetch("/api/generate-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           destination: destName,
           lat: finalLat,
           lng: finalLng,
           budget,
+          budgetAmount: parsedBudgetAmount,
+          budgetCurrency,
           duration,
-          date: format(date, "yyyy-MM-dd"),
+          date: format(tripStartDate, "yyyy-MM-dd"),
+          endDate: duration === "multi" ? format(tripEndDate, "yyyy-MM-dd") : undefined,
           accommodation,
           people,
           ages,
           interests,
           planType,
           language: lang,
-        },
+        }),
       });
+
+      const result = (await res.json()) as GeneratedPlan | { error?: string };
+      if (!res.ok || "error" in result) throw new Error(result.error ?? "AI_ERROR");
+
       setPlan(result);
       toast.success(t(lang, "plan_ready"));
       setTimeout(() => {
@@ -124,7 +170,9 @@ function Index() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const mapStops = hoverStops.length > 0 ? hoverStops : (plan?.days[0]?.stops ?? []).map((s, i) => ({ lat: s.lat, lng: s.lng, title: s.title, n: i + 1 }));
+  const mapStops = hoverStops.length > 0
+    ? hoverStops
+    : (plan?.days.flatMap((day) => day.stops) ?? []).map((s, i) => ({ lat: s.lat, lng: s.lng, title: s.title, n: i + 1 }));
 
   return (
     <div className="min-h-screen">
@@ -191,13 +239,32 @@ function Index() {
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
                     <Wallet className="h-3.5 w-3.5" /> {t(lang, "budget")}
                   </Label>
-                  <div className="flex flex-wrap gap-2">
-                    {(["low", "medium", "luxury"] as const).map((b) => (
-                      <Chip key={b} active={budget === b} onClick={() => setBudget(b)}>
-                        {t(lang, `budget_${b}`)}
-                      </Chip>
-                    ))}
+                  <div className="grid grid-cols-[1fr_112px] gap-3">
+                    <div className="relative">
+                      <Wallet className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-primary pointer-events-none", dir === "rtl" ? "right-3" : "left-3")} />
+                      <Input
+                        type="number"
+                        min={1}
+                        value={budgetAmount}
+                        onChange={(e) => setBudgetAmount(e.target.value)}
+                        placeholder="300"
+                        className={cn("h-11 rounded-xl font-semibold", dir === "rtl" ? "pr-9 pl-3" : "pl-9 pr-3")}
+                      />
+                    </div>
+                    <Select value={budgetCurrency} onValueChange={(value) => setBudgetCurrency(value as CurrencyCode)}>
+                      <SelectTrigger className="h-11 rounded-xl font-semibold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CURRENCIES.map((currency) => (
+                          <SelectItem key={currency} value={currency}>{currency}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Planning as {t(lang, `budget_${budget}`)} based on {people} traveler{people === 1 ? "" : "s"} and {tripDays} day{tripDays === 1 ? "" : "s"}.
+                  </p>
                 </div>
 
                 {/* Time */}
@@ -224,18 +291,34 @@ function Index() {
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start font-medium h-11 rounded-xl">
                           <CalendarIcon className="h-4 w-4 me-2" />
-                          {format(date, "PPP")}
+                          <span className="truncate">{dateLabel}</span>
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={date}
-                          onSelect={(d) => d && setDate(d)}
-                          disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
+                        {duration === "multi" ? (
+                          <Calendar
+                            mode="range"
+                            numberOfMonths={2}
+                            selected={dateRange}
+                            onSelect={(range) => {
+                              const from = range?.from ?? dateRange.from ?? new Date();
+                              const to = range?.to ?? range?.from ?? dateRange.to ?? addDays(from, 2);
+                              setDateRange({ from, to });
+                            }}
+                            disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        ) : (
+                          <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={(d) => d && setDate(d)}
+                            disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        )}
                       </PopoverContent>
                     </Popover>
                   </div>
@@ -252,9 +335,9 @@ function Index() {
                 </div>
 
                 {/* People + ages */}
-                <div className="grid sm:grid-cols-[120px_1fr] gap-4">
+                <div className="grid sm:grid-cols-[180px_1fr] gap-4">
                   <div>
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5 whitespace-nowrap">
                       <Users className="h-3.5 w-3.5" /> {t(lang, "people")}
                     </Label>
                     <Input
