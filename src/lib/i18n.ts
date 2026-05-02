@@ -6,14 +6,25 @@ export const LANGS: { code: Lang; label: string; native: string; dir: "ltr" | "r
   { code: "he", label: "Hebrew", native: "עברית", dir: "rtl" },
 ];
 
+export const LANG_STORAGE_KEY = "city-compass-lang";
+
+export function isLang(value: string | null): value is Lang {
+  return LANGS.some((lang) => lang.code === value);
+}
+
 type Dict = Record<string, string>;
 
 export const translations: Record<Lang, Dict> = {
   en: {
-    brand: "Masari",
+    brand: "City Compass",
     tagline: "AI Trip Planner",
     nav_about: "How it works",
     nav_destinations: "Destinations",
+    nav_contact: "Contact",
+    home: "Home",
+    contact_badge: "Contact the team",
+    contact_title: "Contact Us",
+    contact_intro: "Reach the City Compass team for trip planning help, questions, or feedback.",
     hero_eyebrow: "Jerusalem · Galilee · Northern Israel",
     hero_title: "Your personal AI travel agent for the Holy Land & the North",
     hero_sub: "Tell us where you want to go. We'll build a weather-aware, day-by-day itinerary tuned to your budget, time and group — with one-tap navigation.",
@@ -72,10 +83,15 @@ export const translations: Record<Lang, Dict> = {
     feature_3_desc: "Curated picks for Jerusalem, Galilee, the Golan and the coast.",
   },
   ar: {
-    brand: "مَسَار",
+    brand: "بوصلة المدينه",
     tagline: "وكيل الرحلات بالذكاء الاصطناعي",
     nav_about: "كيف يعمل",
     nav_destinations: "الوجهات",
+    nav_contact: "تواصل معنا",
+    home: "الرئيسية",
+    contact_badge: "تواصل مع الفريق",
+    contact_title: "تواصل معنا",
+    contact_intro: "تواصل مع فريق بوصلة المدينة للمساعدة في تخطيط الرحلات أو للأسئلة والملاحظات.",
     hero_eyebrow: "القدس · الجليل · الشمال",
     hero_title: "وكيلك الذكي لرحلات الأرض المقدسة والشمال",
     hero_sub: "أخبرنا إلى أين تريد الذهاب، وسنُعدّ لك خطة يومية تأخذ بعين الاعتبار الطقس والميزانية والوقت ونوع المجموعة — مع تنقل بنقرة واحدة.",
@@ -134,10 +150,15 @@ export const translations: Record<Lang, Dict> = {
     feature_3_desc: "اختيارات مختارة بعناية للقدس والجليل والجولان والساحل.",
   },
   he: {
-    brand: "מסאר",
+    brand: "מצפן העיר",
     tagline: "מתכנן טיולים חכם",
     nav_about: "איך זה עובד",
     nav_destinations: "יעדים",
+    nav_contact: "יצירת קשר",
+    home: "בית",
+    contact_badge: "צרו קשר עם הצוות",
+    contact_title: "יצירת קשר",
+    contact_intro: "צרו קשר עם צוות מצפן העיר לעזרה בתכנון טיולים, לשאלות או למשוב.",
     hero_eyebrow: "ירושלים · הגליל · הצפון",
     hero_title: "סוכן הנסיעות החכם שלכם לארץ הקודש ולצפון",
     hero_sub: "ספרו לנו לאן בא לכם — ונבנה מסלול יומי מותאם למזג האוויר, לתקציב, לזמן ולקבוצה, עם ניווט בלחיצה.",

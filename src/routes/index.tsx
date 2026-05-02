@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { addDays, format } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -21,7 +21,7 @@ import { Chip } from "@/components/Chip";
 import { PlannerMap, type MapStop } from "@/components/PlannerMap";
 import { WeatherBadge } from "@/components/WeatherBadge";
 import { ItineraryView } from "@/components/ItineraryView";
-import { type Lang, t, LANGS } from "@/lib/i18n";
+import { type Lang, t, LANGS, LANG_STORAGE_KEY, isLang } from "@/lib/i18n";
 import { DESTINATIONS, findDestination } from "@/lib/destinations";
 import type { GeneratedPlan } from "@/server/generate-plan";
 
@@ -50,6 +50,7 @@ function inferBudgetTier(amount: number, currency: CurrencyCode, people: number,
 function Index() {
   const [lang, setLang] = useState<Lang>("en");
   const dir = LANGS.find((l) => l.code === lang)!.dir;
+  const currentYear = new Date().getFullYear();
 
   const [destination, setDestination] = useState("");
   const [center, setCenter] = useState<[number, number]>(DEFAULT_CENTER);
@@ -74,11 +75,22 @@ function Index() {
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<GeneratedPlan | null>(null);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storedLang = window.localStorage.getItem(LANG_STORAGE_KEY);
+    if (isLang(storedLang)) {
+      setLang(storedLang);
+    }
+  }, []);
+
   // sync html dir + lang
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.documentElement.setAttribute("dir", dir);
       document.documentElement.setAttribute("lang", lang);
+    }
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(LANG_STORAGE_KEY, lang);
     }
   }, [dir, lang]);
 
@@ -190,7 +202,15 @@ function Index() {
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{t(lang, "tagline")}</span>
             </div>
           </div>
-          <LangSwitcher lang={lang} onChange={setLang} />
+          <div className="flex items-center gap-2">
+            <Link
+              to="/contact"
+              className="hidden rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:inline-flex"
+            >
+              {t(lang, "nav_contact")}
+            </Link>
+            <LangSwitcher lang={lang} onChange={setLang} />
+          </div>
         </div>
       </header>
 
@@ -460,9 +480,22 @@ function Index() {
         )}
       </section>
 
-      <footer className="border-t border-border/60 bg-background/60">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 text-center text-xs text-muted-foreground">
-          {t(lang, "powered")}
+      <footer className="border-t border-border/70 bg-surface/85 backdrop-blur-sm" aria-label="Site footer">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4 py-5 text-center text-sm text-muted-foreground sm:px-6 md:justify-between md:text-start">
+          <div className="inline-flex items-center gap-2">
+            <Compass className="h-4 w-4 text-primary" aria-hidden="true" />
+            <span className="font-medium text-foreground">{t(lang, "brand")}</span>
+          </div>
+
+          <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+            <span>© {currentYear} All rights reserved.</span>
+            <Link
+              to="/contact"
+              className="font-medium text-foreground underline-offset-4 transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {t(lang, "contact_title")}
+            </Link>
+          </p>
         </div>
       </footer>
     </div>

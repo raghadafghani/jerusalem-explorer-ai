@@ -9,9 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiGeneratePlanRouteImport } from './routes/api.generate-plan'
 
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -25,32 +31,43 @@ const ApiGeneratePlanRoute = ApiGeneratePlanRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/contact': typeof ContactRoute
   '/api/generate-plan': typeof ApiGeneratePlanRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/contact': typeof ContactRoute
   '/api/generate-plan': typeof ApiGeneratePlanRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/contact': typeof ContactRoute
   '/api/generate-plan': typeof ApiGeneratePlanRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/generate-plan'
+  fullPaths: '/' | '/contact' | '/api/generate-plan'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/generate-plan'
-  id: '__root__' | '/' | '/api/generate-plan'
+  to: '/' | '/contact' | '/api/generate-plan'
+  id: '__root__' | '/' | '/contact' | '/api/generate-plan'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ContactRoute: typeof ContactRoute
   ApiGeneratePlanRoute: typeof ApiGeneratePlanRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ContactRoute: ContactRoute,
   ApiGeneratePlanRoute: ApiGeneratePlanRoute,
 }
 export const routeTree = rootRouteImport
