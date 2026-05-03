@@ -9,7 +9,6 @@ export type Destination = {
 
 export const DESTINATIONS: Destination[] = [
   { id: "jerusalem", names: { en: "Jerusalem", ar: "القدس", he: "ירושלים" }, region: "jerusalem", lat: 31.7683, lng: 35.2137 },
-  { id: "bethlehem", names: { en: "Bethlehem", ar: "بيت لحم", he: "בית לחם" }, region: "jerusalem", lat: 31.7054, lng: 35.2024 },
   { id: "haifa", names: { en: "Haifa", ar: "حيفا", he: "חיפה" }, region: "north", lat: 32.7940, lng: 34.9896 },
   { id: "nazareth", names: { en: "Nazareth", ar: "الناصرة", he: "נצרת" }, region: "north", lat: 32.7021, lng: 35.2978 },
   { id: "tiberias", names: { en: "Tiberias", ar: "طبريا", he: "טבריה" }, region: "north", lat: 32.7959, lng: 35.5300 },
