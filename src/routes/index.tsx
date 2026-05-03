@@ -4,8 +4,9 @@ import { addDays, format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import {
   MapPin, Wallet, Clock4, Calendar as CalendarIcon, BedDouble, Users, Sparkles,
-  Wand2, Loader2, Compass, RotateCcw, ArrowDown,
+  Wand2, Loader2, RotateCcw, ArrowDown,
 } from "lucide-react";
+import { CityCompassLogo } from "@/components/CityCompassLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -193,9 +194,9 @@ function Index() {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border/40 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3.5">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-primary text-primary-foreground shadow-glow">
-              <Compass className="h-5 w-5" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-glow">
+              <CityCompassLogo size={28} />
             </div>
             <div className="flex flex-col leading-none">
               <span className="font-display text-lg font-bold tracking-tight">{t(lang, "brand")}</span>
