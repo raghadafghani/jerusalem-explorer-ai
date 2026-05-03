@@ -18,3 +18,7 @@ export default defineConfig({
     },
   },
 });
+<<<<<<< HEAD
+=======
+main
+>>>>>>> 674a46846df7400fff3ebf237705e6d666194706
