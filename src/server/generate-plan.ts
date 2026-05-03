@@ -638,19 +638,41 @@ async function fetchWeather(lat: number, lng: number, date: string): Promise<Wea
   }
 }
 
-const SYSTEM_PROMPT = `You are Masari, an expert local travel agent specializing in Jerusalem and northern Israel (Galilee, Golan, coast — including Haifa, Nazareth, Tiberias, Akko, Safed, Caesarea, Rosh HaNikra, the Arab and Druze towns of the Galilee).
+const SYSTEM_PROMPT = `You are City Compass, an expert local travel agent specializing in Jerusalem and northern Israel (Galilee, Golan, coast — including Haifa, Nazareth, Tiberias, Akko, Safed, Caesarea, Rosh HaNikra, the Arab and Druze towns of the Galilee).
 
 You speak with warmth, cultural sensitivity, and deep local knowledge. You know the holy sites of all faiths, the best hummus joints, the hidden viewpoints, the hiking trails, and which places require advance booking.
 
-Generate a realistic, actionable, day-by-day itinerary as JSON via the structured tool. Rules:
-- Adapt activities to the live weather provided. Rainy → museums, churches, mosques, markets, bathhouses, restaurants. Hot → early starts, shaded old cities, water activities, late-evening dining. Cold → indoor sites + warm food.
-- Optimize routes geographically — group nearby stops on the same day. Provide REAL coordinates for each stop (use your knowledge of actual locations).
+════════════════════════════════════════
+UNIQUENESS — ABSOLUTE RULE (never break):
+════════════════════════════════════════
+Before writing each stop, mentally check a running list of every place already used in the plan.
+• NO place, attraction, restaurant, café, market, or activity may appear more than ONCE across ALL days.
+• This includes near-duplicates: "Old City lunch" and "Old City dinner" count as the SAME location — pick one or use a different area.
+• Maintain an internal "used places" list as you write. If a name is on that list, choose a different place immediately.
+• When a city has limited sights, EXPAND geographically to nearby towns, villages, viewpoints, or day-trip destinations rather than repeating.
+• Variety of category PER DAY is required: never fill a full day with only attractions or only restaurants.
+
+════════════════════════════════════════
+DAY THEMING — each day must feel distinct:
+════════════════════════════════════════
+Assign each day a clear experiential theme and stick to it:
+• Examples: "Old City & Faith Quarter", "Nature & Hilltop Villages", "Food & Local Markets", "Coast & Archaeological Sites", "Art Neighbourhoods & Modern Culture", "Golan/Galilee Landscapes"
+• The day title should reflect the theme. Stops should reinforce it.
+• Mix categories within the theme (e.g. a "Nature" day can still include a local lunch and a craft shop).
+
+════════════════════════════════════════
+PLANNING LOGIC:
+════════════════════════════════════════
+- Distribute major/iconic attractions evenly across days — do NOT cluster all highlights on Day 1.
+- Sequence stops geographically within each day to minimise driving. Provide REAL coordinates.
+- Adapt to live weather: Rainy → museums, churches, mosques, covered markets, bathhouses. Hot → early starts, shaded old cities, water activities, late-evening dining. Cold → indoor sites + warm food.
 - Match budget: low ($-$$), medium ($$-$$$), luxury ($$$$).
-- For every stop, include imageQuery with the real place name and city, an optional exact English Wikipedia wikiTitle when available, and reviewRating from 0 to 5 based on typical public review sentiment.
-- For families with children, include kid-friendly stops. For older travelers, avoid steep climbs.
-- Mark reservation status honestly. Western Wall tunnels, Tower of David sound & light, Bahá'í Gardens guided tour, Rosh HaNikra cable car (busy days) → required/recommended.
-- Respond in the requested language for all user-facing text (titles, descriptions, summaries, insights). Coordinates and category enums stay in English.
-- Smart insights should be specific and useful (e.g. "Friday afternoon: Old City markets close early — do shopping before 14:00").`;
+- For families with children: include kid-friendly, interactive, or outdoor-play stops.
+- For older travelers: avoid steep climbs; prefer level walkways and seated experiences.
+- Mark reservation status honestly. Western Wall Tunnels, Tower of David Night Show, Bahá'í Gardens guided tour, Rosh HaNikra cable car → required/recommended.
+- For every stop include: imageQuery (real place name + city), optional exact English Wikipedia wikiTitle, reviewRating 0–5.
+- Respond in the requested language for all user-facing text. Coordinates and category enums stay in English.
+- Smart insights must be specific and actionable (e.g. "Friday: Old City markets close by 14:00 — shop early", "Bahá'í Gardens: only guided tours allowed, book 48 h ahead").`;
 
 const PLAN_TOOL = {
   type: "function" as const,
@@ -748,20 +770,35 @@ export async function generatePlanData(input: unknown): Promise<GeneratedPlan> {
 
     const langName = data.language === "ar" ? "Arabic" : data.language === "he" ? "Hebrew" : "English";
     const numDays = requestedDayCount(data);
-    const dayHint = data.duration === "half" ? "Plan a HALF-DAY (~4-5 hours, 3-4 stops)." :
-                    data.duration === "full" ? "Plan a FULL DAY (~8-10 hours, 5-7 stops)." :
-                    `Plan ${numDays} days, 4-6 stops per day. Return exactly ${numDays} day objects.`;
+    const dayHint = data.duration === "half"
+      ? "Plan a HALF-DAY (~4-5 hours, 3-4 stops). One day object."
+      : data.duration === "full"
+      ? "Plan a FULL DAY (~8-10 hours, 5-7 stops). One day object."
+      : `Plan exactly ${numDays} DAYS. Return exactly ${numDays} day objects. Each day: 4-6 stops, 8-10 hours of activities.`;
+
+    const uniquenessBlock = numDays > 1 ? `
+UNIQUENESS ENFORCEMENT (${numDays}-day trip):
+- Before writing each stop, scan every stop you have already written across ALL previous days.
+- STRICTLY FORBIDDEN: using the same place name, attraction, restaurant, or location twice — even with different wording.
+- Give each day a distinct theme. Suggested themes for ${numDays} days: ${
+      numDays === 2 ? "Day 1: Core historic/religious highlights · Day 2: Nature, food & local neighbourhoods"
+    : numDays === 3 ? "Day 1: Iconic landmarks · Day 2: Local culture & markets · Day 3: Nature, viewpoints & day-trip area"
+    : numDays === 4 ? "Day 1: Old city & faith quarter · Day 2: Food & artisan neighbourhoods · Day 3: Nature & scenic viewpoints · Day 4: Nearby towns & hidden gems"
+    : `Day 1: Iconic landmarks — Day ${numDays}: least-visited local gems (escalate from famous to hidden as days progress)`
+    }.
+- If you run out of unique in-city spots: expand to villages, viewpoints, or day-trip destinations within 30–60 min.
+- The final itinerary must read like ${numDays} different travellers explored ${numDays} different corners of the destination.` : "";
 
     const userPrompt = `Destination: ${data.destination} (lat ${data.lat}, lng ${data.lng})
 Date${data.endDate ? " range" : ""}: ${data.endDate ? `${data.date} to ${data.endDate}` : data.date}
-Live weather: ${weather.tempC}°C, ${weather.summary}, precipitation ${weather.precipitationMm}mm, wind ${weather.windKph}km/h. ${weather.isRainy ? "RAINY — favor indoor activities." : ""} ${weather.isHot ? "HOT — favor early/late and shaded spots." : ""} ${weather.isCold ? "COLD — favor indoor/warm spots." : ""}
-Budget: ${budgetLabel(data)}. Keep paid stops, meals, tours, and accommodation realistic for this total budget.
+Live weather: ${weather.tempC}°C, ${weather.summary}, precipitation ${weather.precipitationMm}mm, wind ${weather.windKph}km/h.${weather.isRainy ? " RAINY — strongly prefer indoor activities." : ""}${weather.isHot ? " HOT — start early, use shade, late-evening dining." : ""}${weather.isCold ? " COLD — indoor/warm stops preferred." : ""}
+Budget: ${budgetLabel(data)}. Keep all paid stops, meals, tours, and accommodation realistic for this total budget.
 Group: ${data.people} people, ages: ${data.ages || "unspecified"}
 Interests: ${data.interests || "general sightseeing"}
-Plan style: ${data.planType === "group" ? "Recommend GROUP TOURS as the focus — fill groupTours with 3-5 real-style guided tours and include daily stops around tour meeting points." : "Custom personalized itinerary."}
-Accommodation: ${data.accommodation ? `Include 3-4 accommodation picks matching the budget.` : "No accommodation needed — leave accommodations empty."}
+Plan style: ${data.planType === "group" ? "GROUP TOURS focus — fill groupTours with 3-5 real guided tours; daily stops should cluster around tour meeting points." : "Custom personalized itinerary."}
+Accommodation: ${data.accommodation ? "Include 3-4 accommodation picks matching the budget." : "No accommodation — leave accommodations empty."}
 Days to plan: ${numDays}. ${dayHint}
-Language: write all titles, descriptions, summaries, insights in ${langName}.`;
+Language: write all titles, descriptions, summaries, insights in ${langName}.${uniquenessBlock}`;
 
     const aiRes = await fetch(AI_API_URL, {
       method: "POST",
