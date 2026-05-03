@@ -83,7 +83,7 @@ export const translations: Record<Lang, Dict> = {
     feature_3_desc: "Curated picks for Jerusalem, Galilee, the Golan and the coast.",
   },
   ar: {
-    brand: "بوصلة المدينه",
+    brand: "بوصلة المدينة",
     tagline: "وكيل الرحلات بالذكاء الاصطناعي",
     nav_about: "كيف يعمل",
     nav_destinations: "الوجهات",

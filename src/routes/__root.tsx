@@ -29,10 +29,10 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Masari — AI Trip Planner for Jerusalem & Northern Israel" },
+      { title: "City Compass — AI Trip Planner for Jerusalem & Northern Israel" },
       { name: "description", content: "An expert AI travel agent that crafts personalized, weather-aware itineraries for Jerusalem and the northern region. Multilingual: Arabic, Hebrew, English." },
-      { name: "author", content: "Masari" },
-      { property: "og:title", content: "Masari — AI Trip Planner" },
+      { name: "author", content: "City Compass" },
+      { property: "og:title", content: "City Compass — AI Trip Planner" },
       { property: "og:description", content: "Personalized day-by-day itineraries for Jerusalem and northern Israel, powered by AI and live weather." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { addDays, format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import {
   MapPin, Wallet, Clock4, Calendar as CalendarIcon, BedDouble, Users, Sparkles,
-  Wand2, Loader2, Compass, RotateCcw, ArrowDown,
+  Wand2, Loader2, RotateCcw, ArrowDown, Compass, Brain, CloudSun, Globe2,
+  ChevronRight, CheckCircle, ArrowRight, Zap, Shield, Star,
 } from "lucide-react";
+import { CityCompassLogo } from "@/components/CityCompassLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -193,9 +195,9 @@ function Index() {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border/40 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3.5">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-primary text-primary-foreground shadow-glow">
-              <Compass className="h-5 w-5" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-glow">
+              <CityCompassLogo size={28} />
             </div>
             <div className="flex flex-col leading-none">
               <span className="font-display text-lg font-bold tracking-tight">{t(lang, "brand")}</span>
@@ -214,24 +216,122 @@ function Index() {
         </div>
       </header>
 
-      {/* Hero + planner */}
-      <section className="gradient-hero relative">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-12 sm:pt-20 pb-12">
-          <div className="text-center max-w-3xl mx-auto animate-fade-up">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-medium text-primary mb-5">
+      {/* ── HERO ── */}
+      <section className="relative overflow-hidden min-h-[88vh] flex flex-col justify-center">
+        {/* Background layers */}
+        <div className="absolute inset-0 gradient-hero" />
+        <div className="absolute inset-0" style={{
+          backgroundImage: `
+            radial-gradient(ellipse 60% 50% at 15% 50%, oklch(0.62 0.13 195 / 0.18) 0%, transparent 70%),
+            radial-gradient(ellipse 50% 60% at 85% 30%, oklch(0.72 0.14 75 / 0.13) 0%, transparent 65%),
+            radial-gradient(ellipse 40% 40% at 60% 80%, oklch(0.55 0.12 195 / 0.10) 0%, transparent 60%)
+          `
+        }} />
+
+        {/* Decorative glowing orbs */}
+        <div className="pointer-events-none absolute -top-20 -left-20 h-96 w-96 rounded-full bg-primary/8 blur-[80px] animate-glow-pulse" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-80 w-80 rounded-full bg-gold/10 blur-[60px] animate-glow-pulse" style={{ animationDelay: "2s" }} />
+        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-primary/4 blur-[120px]" />
+
+        {/* Floating destination pills */}
+        <div className="pointer-events-none absolute inset-0 hidden lg:block overflow-hidden">
+          {[
+            { label: "🕌 Jerusalem", cls: "top-[18%] left-[6%]", delay: "0s" },
+            { label: "⛵ Sea of Galilee", cls: "top-[30%] right-[5%]", delay: "1.5s" },
+            { label: "🏛️ Nazareth", cls: "bottom-[32%] left-[4%]", delay: "3s" },
+            { label: "🌿 Golan Heights", cls: "top-[55%] right-[7%]", delay: "0.8s" },
+            { label: "🐚 Haifa", cls: "bottom-[20%] right-[12%]", delay: "2.2s" },
+            { label: "🏰 Akko", cls: "top-[12%] right-[18%]", delay: "1s" },
+          ].map(({ label, cls, delay }) => (
+            <div
+              key={label}
+              className={`absolute ${cls} animate-float`}
+              style={{ animationDelay: delay, animationDuration: `${5 + Math.random() * 3}s` }}
+            >
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-background/70 px-3.5 py-1.5 text-xs font-semibold text-foreground/80 shadow-md backdrop-blur-md">
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Hero content */}
+        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 pt-16 pb-10 text-center">
+          {/* Badge */}
+          <div className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/8 px-4 py-1.5 text-xs font-semibold text-primary shadow-sm mb-6 backdrop-blur-sm" style={{ animationDelay: "0ms" }}>
+            <Sparkles className="h-3.5 w-3.5" />
+            AI-Powered · Weather-Smart · Multilingual
+          </div>
+
+          {/* Headline */}
+          <h1 className="animate-fade-up text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.02] text-balance" style={{ animationDelay: "80ms" }}>
+            Explore the{" "}
+            <span className="text-gradient-primary">Holy Land</span>
+            <br className="hidden sm:block" />
+            {" "}Like Never Before
+          </h1>
+
+          {/* Subtext */}
+          <p className="animate-fade-up mt-6 text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto text-pretty" style={{ animationDelay: "160ms" }}>
+            Tell us where you want to go. Our AI builds a personalized, day-by-day itinerary — weather-aware, budget-matched, and ready to navigate.
+          </p>
+
+          {/* CTAs */}
+          <div className="animate-fade-up mt-8 flex flex-wrap items-center justify-center gap-3" style={{ animationDelay: "240ms" }}>
+            <a
+              href="#planner"
+              className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-glow transition-all hover:shadow-xl hover:-translate-y-0.5"
+            >
+              <Sparkles className="h-4 w-4" />
+              Plan My Trip
+              <ChevronRight className="h-4 w-4" />
+            </a>
+            <a
+              href="#how-it-works"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-6 py-3 text-sm font-semibold text-foreground backdrop-blur-sm transition-all hover:bg-background hover:shadow-md"
+            >
+              How it works
+              <ArrowDown className="h-4 w-4" />
+            </a>
+          </div>
+
+          {/* Trust row */}
+          <div className="animate-fade-up mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground" style={{ animationDelay: "320ms" }}>
+            {[
+              { icon: CheckCircle, text: "Real-time weather" },
+              { icon: Globe2, text: "Arabic · Hebrew · English" },
+              { icon: Zap, text: "Instant AI planning" },
+              { icon: Shield, text: "Free to use" },
+            ].map(({ icon: Icon, text }) => (
+              <span key={text} className="flex items-center gap-1.5 font-medium">
+                <Icon className="h-3.5 w-3.5 text-primary" />
+                {text}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="relative mx-auto flex flex-col items-center gap-1 pb-8 text-muted-foreground">
+          <span className="text-[11px] font-medium uppercase tracking-widest">Scroll to plan</span>
+          <ArrowDown className="h-4 w-4 animate-bounce" />
+        </div>
+      </section>
+
+      {/* ── PLANNER ── */}
+      <section id="planner" className="relative bg-gradient-to-b from-background via-background to-secondary/20 py-12 sm:py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="mb-8 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-semibold text-primary mb-3">
               <Sparkles className="h-3.5 w-3.5" />
               {t(lang, "hero_eyebrow")}
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance leading-[1.05]">
-              {t(lang, "hero_title")}
-            </h1>
-            <p className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed text-pretty max-w-2xl mx-auto">
-              {t(lang, "hero_sub")}
-            </p>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">{t(lang, "hero_title")}</h2>
+            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">{t(lang, "hero_sub")}</p>
           </div>
 
-          {/* Planner */}
-          <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_1.05fr]">
+          {/* Planner grid */}
+          <div className="grid gap-6 lg:grid-cols-[1fr_1.05fr]">
             {/* Form card */}
             <div className="rounded-3xl border border-border bg-surface/95 backdrop-blur p-6 sm:p-8 shadow-elegant animate-fade-up" style={{ animationDelay: "120ms" }}>
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
@@ -459,9 +559,9 @@ function Index() {
         </div>
       </section>
 
-      {/* Itinerary */}
-      <section id="itinerary" className="mx-auto max-w-7xl px-4 sm:px-6 pb-20">
-        {plan ? (
+      {/* ── ITINERARY (after generation) ── */}
+      {plan && (
+        <section id="itinerary" className="mx-auto max-w-7xl px-4 sm:px-6 pb-20">
           <div className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3 pt-4">
               <div>
@@ -475,52 +575,283 @@ function Index() {
             </div>
             <ItineraryView plan={plan} lang={lang} onHoverStops={setHoverStops} />
           </div>
-        ) : (
-          <FeatureStrip lang={lang} />
-        )}
-      </section>
+        </section>
+      )}
 
-      <footer className="border-t border-border/70 bg-surface/85 backdrop-blur-sm" aria-label="Site footer">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4 py-5 text-center text-sm text-muted-foreground sm:px-6 md:justify-between md:text-start">
-          <div className="inline-flex items-center gap-2">
-            <Compass className="h-4 w-4 text-primary" aria-hidden="true" />
-            <span className="font-medium text-foreground">{t(lang, "brand")}</span>
+      {/* ── LANDING SECTIONS (only when no plan) ── */}
+      {!plan && <LandingSections lang={lang} onStartPlanning={() => document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" })} />}
+
+      {/* ── FOOTER ── */}
+      <footer className="relative border-t border-border/60 bg-surface/90 backdrop-blur-sm">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            {/* Brand */}
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-primary shadow-glow">
+                <CityCompassLogo size={22} />
+              </div>
+              <div>
+                <div className="font-bold text-sm text-foreground">{t(lang, "brand")}</div>
+                <div className="text-[11px] text-muted-foreground">{t(lang, "tagline")}</div>
+              </div>
+            </div>
+
+            {/* Links */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm text-muted-foreground">
+              <a href="#how-it-works" className="hover:text-primary transition-colors">How it works</a>
+              <a href="#destinations" className="hover:text-primary transition-colors">Destinations</a>
+              <Link to="/contact" className="hover:text-primary transition-colors">{t(lang, "contact_title")}</Link>
+            </div>
+
+            {/* Copy */}
+            <p className="text-xs text-muted-foreground">
+              © {currentYear} City Compass · Powered by AI & Open-Meteo
+            </p>
           </div>
-
-          <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-            <span>© {currentYear} All rights reserved.</span>
-            <Link
-              to="/contact"
-              className="font-medium text-foreground underline-offset-4 transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {t(lang, "contact_title")}
-            </Link>
-          </p>
         </div>
       </footer>
     </div>
   );
 }
 
-function FeatureStrip({ lang }: { lang: Lang }) {
-  const items = [
-    { key: "1", icon: "☁️" },
-    { key: "2", icon: "🧭" },
-    { key: "3", icon: "🏛️" },
-  ];
+/* ─────────────────────────────────────────
+   COUNT-UP COMPONENT
+───────────────────────────────────────── */
+function CountUp({ end, suffix = "", duration = 1800 }: { end: number; suffix?: string; duration?: number }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const startTime = performance.now();
+          const tick = (now: number) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            // Ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.round(eased * end));
+            if (progress < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [end, duration]);
+
+  return <span ref={ref}>{count}{suffix}</span>;
+}
+
+/* ─────────────────────────────────────────
+   LANDING SECTIONS
+───────────────────────────────────────── */
+const FEATURED_CITIES = [
+  { name: "Jerusalem", emoji: "🕌", desc: "The Holy City — ancient walls, sacred sites, vibrant souks.", color: "from-amber-400/20 to-orange-300/10" },
+  { name: "Nazareth", emoji: "🏛️", desc: "The city of Jesus — basilicas, aromatic markets, Arab cuisine.", color: "from-teal-400/20 to-cyan-300/10" },
+  { name: "Haifa", emoji: "🌺", desc: "Mount Carmel, Bahá'í Gardens, and a stunning Mediterranean port.", color: "from-indigo-400/20 to-blue-300/10" },
+  { name: "Tiberias", emoji: "⛵", desc: "Sea of Galilee shores, hot springs, and spiritual landscapes.", color: "from-sky-400/20 to-teal-300/10" },
+  { name: "Akko", emoji: "🏰", desc: "Crusader city, ancient port, and legendary hummus joints.", color: "from-violet-400/20 to-purple-300/10" },
+  { name: "Safed", emoji: "🎨", desc: "Mystical Kabbalah city, artist quarter, mountain cool air.", color: "from-rose-400/20 to-pink-300/10" },
+];
+
+const HOW_STEPS = [
+  {
+    n: "01",
+    icon: MapPin,
+    title: "Choose your destination",
+    desc: "Pick any city in the Holy Land — Jerusalem, Nazareth, Haifa, Tiberias and more.",
+    color: "text-primary",
+    bg: "bg-primary/8",
+  },
+  {
+    n: "02",
+    icon: Brain,
+    title: "AI crafts your plan",
+    desc: "Our AI reads live weather, your budget, group size, and interests to build a perfect itinerary.",
+    color: "text-gold-foreground",
+    bg: "bg-gold/12",
+  },
+  {
+    n: "03",
+    icon: Compass,
+    title: "Navigate & explore",
+    desc: "One-tap Waze navigation to every stop. Your whole trip in your pocket.",
+    color: "text-teal-600",
+    bg: "bg-teal-500/10",
+  },
+];
+
+const WHY_ITEMS = [
+  { icon: CloudSun, title: "Live weather intelligence", desc: "Rainy day? AI swaps outdoor stops for museums, markets, and indoor gems automatically.", color: "text-sky-500", bg: "bg-sky-500/10" },
+  { icon: Zap, title: "Instant AI planning", desc: "Full day-by-day itinerary generated in seconds — not hours of research.", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { icon: Globe2, title: "Truly multilingual", desc: "Full experience in English, Arabic (RTL), and Hebrew. Switch languages anytime.", color: "text-teal-500", bg: "bg-teal-500/10" },
+  { icon: Wallet, title: "Smart budget matching", desc: "Set your total budget and group size. AI automatically targets the right tier.", color: "text-violet-500", bg: "bg-violet-500/10" },
+  { icon: MapPin, title: "Optimized routing", desc: "Stops are grouped geographically to minimize driving time and maximize experience.", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { icon: Star, title: "Curated local picks", desc: "Every spot is verified with real coordinates, honest cost estimates, and reservation notes.", color: "text-gold-foreground", bg: "bg-gold/12" },
+];
+
+function LandingSections({ lang, onStartPlanning }: { lang: Lang; onStartPlanning: () => void }) {
   return (
-    <div className="grid gap-5 sm:grid-cols-3 mt-8">
-      {items.map((it, i) => (
-        <div
-          key={it.key}
-          className="rounded-3xl border border-border bg-gradient-card p-6 shadow-sm hover:shadow-md transition-all animate-fade-up"
-          style={{ animationDelay: `${i * 80}ms` }}
-        >
-          <div className="text-3xl mb-3">{it.icon}</div>
-          <h3 className="font-bold text-lg leading-tight">{t(lang, `feature_${it.key}_title`)}</h3>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{t(lang, `feature_${it.key}_desc`)}</p>
+    <div>
+      {/* ── HOW IT WORKS ── */}
+      <section id="how-it-works" className="py-20 sm:py-24 bg-gradient-to-b from-secondary/30 to-background">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="text-center mb-14 animate-fade-up">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-semibold text-primary mb-4">
+              Simple & Powerful
+            </div>
+            <h2 className="text-4xl sm:text-5xl font-black tracking-tight">How it works</h2>
+            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">Three steps from idea to full itinerary, in seconds.</p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-3">
+            {HOW_STEPS.map((step, i) => (
+              <div
+                key={step.n}
+                className="relative rounded-3xl border border-border bg-surface p-7 shadow-elegant hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-up group"
+                style={{ animationDelay: `${i * 100}ms` }}
+              >
+                {/* Step number watermark */}
+                <span className="absolute top-4 right-5 text-6xl font-black text-foreground/5 select-none">{step.n}</span>
+                <div className={cn("mb-5 flex h-12 w-12 items-center justify-center rounded-2xl shadow-sm", step.bg)}>
+                  <step.icon className={cn("h-6 w-6", step.color)} />
+                </div>
+                <h3 className="text-lg font-bold tracking-tight mb-2">{step.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                {i < HOW_STEPS.length - 1 && (
+                  <ArrowRight className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 text-primary/30 hidden sm:block" />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 text-center animate-fade-up" style={{ animationDelay: "300ms" }}>
+            <button
+              onClick={onStartPlanning}
+              className="inline-flex items-center gap-2 rounded-full gradient-primary px-7 py-3.5 text-sm font-bold text-primary-foreground shadow-glow transition-all hover:shadow-xl hover:-translate-y-0.5"
+            >
+              <Sparkles className="h-4 w-4" />
+              Start Planning Now
+            </button>
+          </div>
         </div>
-      ))}
+      </section>
+
+      {/* ── POPULAR DESTINATIONS ── */}
+      <section id="destinations" className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="text-center mb-14 animate-fade-up">
+            <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/8 px-3.5 py-1.5 text-xs font-semibold text-gold-foreground mb-4">
+              🌍 Explore
+            </div>
+            <h2 className="text-4xl sm:text-5xl font-black tracking-tight">Popular destinations</h2>
+            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">From ancient holy cities to coastal gems — every place has a story.</p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURED_CITIES.map((city, i) => (
+              <button
+                key={city.name}
+                onClick={onStartPlanning}
+                className={cn(
+                  "group relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br p-6 text-start shadow-sm",
+                  "transition-all duration-300 hover:shadow-elegant hover:-translate-y-1 hover:border-primary/30 animate-fade-up",
+                  city.color,
+                )}
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <div className="text-4xl mb-3 transition-transform group-hover:scale-110">{city.emoji}</div>
+                <h3 className="text-lg font-bold tracking-tight mb-1">{city.name}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{city.desc}</p>
+                <div className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                  Plan a trip <ArrowRight className="h-3.5 w-3.5" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── WHY CITY COMPASS ── */}
+      <section className="py-20 sm:py-24 bg-gradient-to-b from-background to-secondary/30">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="text-center mb-14 animate-fade-up">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-semibold text-primary mb-4">
+              🤖 AI-Powered
+            </div>
+            <h2 className="text-4xl sm:text-5xl font-black tracking-tight">Why City Compass?</h2>
+            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">We do the research, routing, and local knowledge — you do the exploring.</p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {WHY_ITEMS.map((item, i) => (
+              <div
+                key={item.title}
+                className="rounded-2xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-all hover:border-primary/20 animate-fade-up"
+                style={{ animationDelay: `${i * 70}ms` }}
+              >
+                <div className={cn("mb-4 flex h-11 w-11 items-center justify-center rounded-xl shadow-sm", item.bg)}>
+                  <item.icon className={cn("h-5 w-5", item.color)} />
+                </div>
+                <h3 className="font-bold text-base mb-1.5">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── STATS / TRUST BANNER ── */}
+      <section className="py-16 border-y border-border bg-gradient-to-r from-primary/6 via-background to-gold/8">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 text-center">
+            {[
+              { end: 15, suffix: "+", label: "Cities covered" },
+              { end: 3,  suffix: "",  label: "Languages" },
+              { end: null, static: "Live", label: "Weather data" },
+              { end: null, static: "Free", label: "Always" },
+            ].map((stat, i) => (
+              <div key={stat.label} className="animate-fade-up" style={{ animationDelay: `${i * 80}ms` }}>
+                <div className="text-4xl sm:text-5xl font-black text-gradient-primary mb-1">
+                  {stat.end != null
+                    ? <CountUp end={stat.end} suffix={stat.suffix ?? ""} />
+                    : stat.static}
+                </div>
+                <div className="text-sm font-medium text-muted-foreground">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FINAL CTA ── */}
+      <section className="py-20 sm:py-24 text-center">
+        <div className="mx-auto max-w-2xl px-4 sm:px-6 animate-fade-up">
+          <div className="text-5xl mb-6 animate-float-slow">🧭</div>
+          <h2 className="text-4xl sm:text-5xl font-black tracking-tight mb-4">
+            Your next adventure{" "}
+            <span className="text-gradient-primary">starts here</span>
+          </h2>
+          <p className="text-muted-foreground mb-8 text-lg leading-relaxed">
+            No planning stress. No hours of research. Just tell us where — and we'll handle the rest.
+          </p>
+          <button
+            onClick={onStartPlanning}
+            className="inline-flex items-center gap-2 rounded-full gradient-primary px-8 py-4 text-base font-bold text-primary-foreground shadow-glow transition-all hover:shadow-xl hover:-translate-y-0.5"
+          >
+            <Sparkles className="h-5 w-5" />
+            Plan My Trip Now
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
