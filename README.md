@@ -50,13 +50,12 @@ cd jerusalem-explorer-ai
 2. Install dependencies
 ```bash
 Bashbun install
-```
 # or
 npm install
 ```
 
 3. Set up environment variables
-Copy .env.example to .env and add your Supabase keys:
+Copy .env.example to .env and add your keys:
 ```bash
 AI_API_KEY=your_api_key
 AI_MODEL=gemini-2.5-flash
