@@ -9,6 +9,7 @@ Tell the AI what you love — history, food, hiking, family time, spiritual jour
 
 **Live Demo**: [jerusalem-explorer-ai-private.vercel.app](https://jerusalem-explorer-ai-private.vercel.app)
 
+**Demo**: [jerusalem-explorer-ai-demo](https://drive.google.com/file/d/1lzfe4ZiIGkNtZBAZM9h9RBM_whLqESRs/view?usp=sharing)
 ---
 
 ## ✨ Key Features
